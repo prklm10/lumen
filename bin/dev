@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# Runs Rails (port 3000) and the Vite dev server (port 3036) together. See Procfile.dev.
+if ! gem list foreman -i --silent; then
+  echo "Installing foreman..."
+  gem install foreman
+fi
+
+export PORT="${PORT:-3000}"
+exec foreman start -f Procfile.dev "$@"

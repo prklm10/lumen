@@ -1,0 +1,61 @@
+# Lumen — local production stack (PRD §10). Run `make setup` once, then `make up`.
+name: lumen
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: lumen
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run `make setup` to create .env}
+      POSTGRES_DB: lumen_production
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    # Small footprint for a single-user app; not published to the host.
+    command: ["postgres", "-c", "shared_buffers=64MB", "-c", "max_connections=30"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lumen -d lumen_production"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 256m
+    restart: unless-stopped
+
+  app:
+    build: .
+    image: lumen:latest
+    # Bound to localhost only — not reachable from your network (PRD DKR-4).
+    ports:
+      - "127.0.0.1:${LUMEN_PORT:-3000}:80"
+    environment:
+      DB_HOST: db
+      DB_USER: lumen
+      LUMEN_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY:?run `make setup` to create .env}
+      SOLID_QUEUE_IN_PUMA: "true"
+      WEB_CONCURRENCY: "0"
+      RAILS_MAX_THREADS: "5"
+      BOOTSNAP_READONLY: "true"
+    volumes:
+      - storage:/rails/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # Ruby's stdlib instead of curl, so the image doesn't need curl and its TLS deps.
+      test: ["CMD", "ruby", "-rnet/http", "-e", "exit Net::HTTP.get_response(URI('http://localhost/up')).is_a?(Net::HTTPSuccess)"]
+      interval: 10s
+      timeout: 3s
+      start_period: 30s
+      retries: 5
+    # Root filesystem is read-only; only these paths are writable.
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /rails/tmp/pids
+      - /rails/tmp/sockets
+    mem_limit: 512m
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+  storage:

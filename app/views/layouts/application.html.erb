@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Lumen</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="application-name" content="Lumen">
+    <meta name="color-scheme" content="light dark">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%# Apply the saved theme before first paint so there is no light/dark flash. %>
+    <%= javascript_tag nonce: true do %>
+      (function () {
+        var mode = "auto";
+        try { mode = localStorage.getItem("lumen-theme") || "auto"; } catch (e) {}
+        var dark = mode === "dark" || (mode === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+      })();
+    <% end %>
+
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="/icon.png" type="image/png">
+
+    <%= vite_client_tag %>
+    <%= vite_typescript_tag "application" %>
+  </head>
+
+  <body>
+    <%= yield %>
+  </body>
+</html>

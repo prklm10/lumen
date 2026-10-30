@@ -1,0 +1,4 @@
+owner:
+  email_address: owner@example.com
+  password_digest: <%= BCrypt::Password.create("correct-horse-battery", cost: BCrypt::Engine::MIN_COST) %>
+  time_zone: Asia/Kolkata

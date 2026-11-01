@@ -713,7 +713,7 @@ Each phase is shippable and maps to learning goals (§13).
 | Phase | Duration (est.) | Scope | Exit criteria |
 |---|---|---|---|
 | **0 — Foundation** ✅ | 1 wk | `rails new --database=postgresql`, vite_rails + Vue + TS + Tailwind + shadcn-vue, Rails 8 auth, app shell (sidebar, theme, ⌘K stub), Dockerfile + compose, CI (lint/test) | Login → empty shell in Docker; image ≤ 300 MB (actual: 293 MB, 202 MB RAM app + 60 MB db) |
-| **1 — Tasks MVP** | 2 wks | Projects, tasks, subtasks, Today/Inbox/Upcoming, list view, task_events, tags | Daily-drivable todo app |
+| **1 — Tasks MVP** | 2 wks | Projects, tasks, subtasks, Today/Inbox/Upcoming, list view, task_events, tags — spec: [phase-1-tasks.md](phase-1-tasks.md) | Daily-drivable todo app |
 | **2 — Learn MVP** | 2–3 wks | TipTap editor, folders tree, notes, image upload/paste, wiki-links, backlinks, FTS search | Write and link notes with images |
 | **3 — Tracker** | 1 wk | Trackers, check-ins, streaks, heatmaps, Today integration | Habits tracked from Today page |
 | **4 — Encrypted Journal** | 2 wks | Vault setup/unlock/lock, Argon2id + AES-GCM, entries, calendar, mood, recovery key, canary leak test | Zero plaintext verified |

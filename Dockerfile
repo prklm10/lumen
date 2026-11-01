@@ -93,6 +93,31 @@ COPY . .
 RUN rm -rf app/frontend && \
     bundle exec bootsnap precompile -j 1 app/ lib/
 
+# ---- dev --------------------------------------------------------------------
+# Development image used by compose.dev.yml (`make dev-up`). The source code is not copied
+# in: the project folder is bind-mounted at /rails, so edits on either side show up at once.
+# Gems and node_modules live in named volumes (macOS-built native binaries can't run here).
+FROM base AS dev
+ARG NODE_VERSION
+
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y build-essential git libpq-dev libyaml-dev pkg-config && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+COPY --from=vips /vips/ /usr/local/lib/
+COPY --from=docker.io/library/node:24-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=docker.io/library/node:24-slim /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
+RUN ldconfig && \
+    ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
+    ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
+
+ENV RAILS_ENV="development" \
+    BUNDLE_DEPLOYMENT="false" \
+    BUNDLE_WITHOUT=""
+
+ENTRYPOINT ["/rails/bin/docker-dev-entrypoint"]
+CMD ["web"]
+
 # ---- final ------------------------------------------------------------------
 FROM base
 

@@ -1,5 +1,6 @@
 # Lumen shortcuts. `make help` lists them.
-.PHONY: help setup up down logs ps console psql build size dev test lint
+.PHONY: help setup up down logs ps bash console psql build size dev test lint \
+  dev-up dev-restart dev-down dev-logs dev-bash dev-console dev-psql dev-test
 
 help: ## Show this help
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
@@ -23,6 +24,9 @@ ps: ## Show container status and memory use
 	docker compose ps
 	docker stats --no-stream $$(docker compose ps -q)
 
+bash: ## bash into app container
+	docker compose exec app /bin/bash
+
 console: ## Rails console inside the running app container
 	docker compose exec app bin/rails console
 
@@ -37,6 +41,37 @@ size: ## Show the app image size (target ≤ 250 MB, PRD DKR-2)
 
 dev: ## Run locally without Docker (Rails :3000 + Vite :3036)
 	bin/dev
+
+# ---- Docker dev stack (compose.dev.yml): your files are mounted, edits apply live ----
+DEV = docker compose -f compose.dev.yml
+
+dev-up: ## Start the Docker dev stack with live reload → http://localhost:3200
+	$(DEV) up -d --build
+	@echo "Lumen (dev) is starting at http://localhost:$${LUMEN_DEV_PORT:-3200}  —  first boot installs gems/npm packages, follow with: make dev-logs"
+
+dev-restart: ## Restart Rails + Vite (installs new gems/npm packages after Gemfile/package.json changes)
+	$(DEV) restart web vite
+
+dev-down: ## Stop the Docker dev stack (gems, node_modules and dev DB are kept)
+	$(DEV) down
+
+dev-logs: ## Follow Rails + Vite logs from the dev stack
+	$(DEV) logs -f web vite
+
+dev-bash: ## bash inside the dev web container (run bin/rails g …, migrations, etc.)
+	$(DEV) exec web bash
+
+dev-console: ## Rails console in the dev stack
+	$(DEV) exec web bin/rails console
+
+dev-migration: ## Rails console in the dev stack
+	$(DEV) exec web bin/rake db:migrate
+
+dev-psql: ## psql on the dev database
+	$(DEV) exec db psql -U lumen lumen_development
+
+dev-test: ## Run the Rails test suite inside the dev stack
+	$(DEV) exec web bin/rails test
 
 test: ## Run backend + frontend tests and typecheck
 	bin/rails test

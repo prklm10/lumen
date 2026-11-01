@@ -1,0 +1,62 @@
+# Lumen — development stack with live code sync. `make dev-up`, then open http://localhost:3200
+# Your project folder is bind-mounted into the containers: edit on your Mac, the container sees it
+# immediately (and files the container creates, like migrations, appear on your Mac).
+# Runs alongside the production stack (compose.yml) — separate project, database and ports.
+name: lumen-dev
+
+x-app: &app
+  build:
+    context: .
+    target: dev
+  image: lumen:dev
+  environment:
+    DB_HOST: db
+    DB_USER: lumen
+    DB_PASSWORD: lumen
+    LUMEN_DOCKER_DEV: "true"
+  volumes:
+    - .:/rails
+    - bundle:/usr/local/bundle
+    - node_modules:/rails/node_modules
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: lumen
+      POSTGRES_PASSWORD: lumen
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    # Published on localhost so you can poke at it with psql/TablePlus while learning Postgres.
+    ports:
+      - "127.0.0.1:${LUMEN_DEV_DB_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lumen"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    <<: *app
+    command: ["web"]
+    ports:
+      - "127.0.0.1:${LUMEN_DEV_PORT:-3200}:3000"
+
+  vite:
+    <<: *app
+    command: ["vite"]
+    environment:
+      VITE_LISTEN_ALL: "true"
+      # Without a cap Node sizes its heap from Docker's VM memory and idles at ~1.1 GB.
+      NODE_OPTIONS: --max-old-space-size=512
+    # The browser loads assets straight from Vite, so the port must match config/vite.json.
+    ports:
+      - "127.0.0.1:3036:3036"
+
+volumes:
+  pg_data:
+  bundle:
+  node_modules:

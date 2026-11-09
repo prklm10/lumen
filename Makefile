@@ -1,6 +1,6 @@
 # Lumen shortcuts. `make help` lists them.
-.PHONY: help setup up down logs ps bash console psql build size dev test lint \
-  dev-up dev-restart dev-down dev-logs dev-bash dev-console dev-psql dev-test
+.PHONY: help setup up down logs ps bash console psql backup restore build size dev test lint \
+  dev-up dev-restart dev-down dev-logs dev-bash dev-console dev-psql dev-test canary
 
 help: ## Show this help
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
@@ -32,6 +32,12 @@ console: ## Rails console inside the running app container
 
 psql: ## psql shell on the production database
 	docker compose exec db psql -U lumen lumen_production
+
+backup: ## Back up the Docker stack's database + uploads → backups/ (keeps the newest 14)
+	bin/backup
+
+restore: ## Restore a backup into the Docker stack: make restore FILE=backups/lumen-….tar.gz
+	bin/restore "$(FILE)"
 
 build: ## Build the app image only
 	docker compose build app
@@ -69,6 +75,9 @@ dev-migration: ## Rails console in the dev stack
 
 dev-psql: ## psql on the dev database
 	$(DEV) exec db psql -U lumen lumen_development
+
+canary: ## Journal leak test: plaintext must not reach the server (needs dev stack + Chrome; EMAIL=… PASSWORD=…)
+	bin/journal-canary "$(EMAIL)" "$(PASSWORD)"
 
 dev-test: ## Run the Rails test suite inside the dev stack
 	$(DEV) exec web bin/rails test

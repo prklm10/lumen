@@ -1,0 +1,23 @@
+<% zone = Time.find_zone("Asia/Kolkata") %>
+meditate:
+  name: Meditate
+  icon: 🧘
+  kind: boolean
+  position: 1
+  created_at: <%= (zone.now - 10.days).utc.to_fs(:db) %>
+
+water:
+  name: Water
+  icon: 💧
+  kind: count
+  unit: glasses
+  target: 8
+  position: 2
+  created_at: <%= (zone.now - 5.days).utc.to_fs(:db) %>
+
+gym:
+  name: Gym
+  kind: duration
+  frequency: <%= { type: "weekly", times: 2 }.to_json %>
+  position: 3
+  archived_at: <%= 1.day.ago.to_fs(:db) %>

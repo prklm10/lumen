@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Restores a bin/backup archive into the Docker stack, replacing the current data.
+# Usage: bin/restore backups/lumen-YYYYMMDD-HHMMSS.tar.gz [--yes]
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+archive="${1:?usage: bin/restore ARCHIVE [--yes]}"
+[ -f "$archive" ] || { echo "No such file: $archive" >&2; exit 1; }
+if [ "${2:-}" != "--yes" ]; then
+  read -r -p "This replaces ALL current Lumen data with $archive. Type 'restore' to continue: " answer
+  [ "$answer" = "restore" ] || { echo "Cancelled."; exit 1; }
+fi
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+tar -xzf "$archive" -C "$work"
+grep -q '^lumen-backup v1' "$work/MANIFEST" || { echo "Not a Lumen backup." >&2; exit 1; }
+
+docker compose stop app
+docker compose exec -T db pg_restore -U lumen -d lumen_production --clean --if-exists --no-owner --single-transaction < "$work/db.dump"
+docker compose run --rm --no-deps -T --entrypoint sh app -c 'find /rails/storage -mindepth 1 -delete && tar -C /rails -xf -' < "$work/storage.tar"
+docker compose start app
+echo "Restored from $archive."

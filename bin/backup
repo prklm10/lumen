@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Backs up the Docker stack (compose.yml): the database (pg_dump -Fc) and uploaded files.
+# Journal entries are already ciphertext inside the dump. Keeps the newest 14 archives.
+# Usage: bin/backup            → backups/lumen-YYYYMMDD-HHMMSS.tar.gz
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+mkdir -p backups
+stamp="$(date +%Y%m%d-%H%M%S)"
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+docker compose exec -T db pg_dump -U lumen -Fc lumen_production > "$work/db.dump"
+docker compose run --rm --no-deps -T --entrypoint tar app -C /rails -cf - storage > "$work/storage.tar"
+printf 'lumen-backup v1\ncreated %s\n' "$(date -u +%FT%TZ)" > "$work/MANIFEST"
+
+archive="backups/lumen-$stamp.tar.gz"
+tar -czf "$archive" -C "$work" MANIFEST db.dump storage.tar
+chmod 600 "$archive"
+echo "Backup written to $archive ($(du -h "$archive" | cut -f1))"
+
+ls -1t backups/lumen-*.tar.gz | tail -n +15 | xargs -r rm --

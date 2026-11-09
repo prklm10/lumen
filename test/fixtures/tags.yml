@@ -1,0 +1,6 @@
+postgres:
+  name: postgres
+  color: blue
+
+errands:
+  name: errands

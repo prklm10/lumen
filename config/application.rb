@@ -36,6 +36,10 @@ module Lumen
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
 
+    # Images are served only through MediaController (signed-in, resized, EXIF stripped).
+    # Active Storage's own routes would serve originals to anyone holding a signed id.
+    config.active_storage.draw_routes = false
+
     # Don't generate system test files.
     config.generators.system_tests = nil
   end

@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { PanelLeftClose, Search } from '@lucide/vue'
+import { PanelLeftClose, Search, Trash2 } from '@lucide/vue'
 import { Kbd } from '@/components/ui/kbd'
 import UserMenu from '@/components/layout/UserMenu.vue'
 import { primaryNav, settingsNav } from '@/lib/navigation'
+import TasksNav from '@/features/tasks/components/TasksNav.vue'
+import LearnNav from '@/features/learn/components/LearnNav.vue'
 
 defineEmits<{ search: []; collapse: [] }>()
 </script>
@@ -35,20 +37,29 @@ defineEmits<{ search: []; collapse: [] }>()
     </div>
 
     <nav class="flex-1 space-y-0.5 overflow-y-auto px-2" aria-label="Main">
-      <RouterLink
-        v-for="item in primaryNav"
-        :key="item.name"
-        :to="item.path"
-        class="group flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-        exact-active-class="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-      >
-        <component :is="item.icon" class="size-4 opacity-80" />
-        <span class="flex-1">{{ item.label }}</span>
-        <span v-if="item.phase" class="hidden text-[11px] text-muted-foreground group-hover:inline">Soon</span>
-      </RouterLink>
+      <template v-for="item in primaryNav" :key="item.name">
+        <RouterLink
+          :to="item.path"
+          class="group flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          exact-active-class="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+        >
+          <component :is="item.icon" class="size-4 opacity-80" />
+          <span class="flex-1">{{ item.label }}</span>
+          <span v-if="item.phase" class="hidden text-[11px] text-muted-foreground group-hover:inline">Soon</span>
+        </RouterLink>
+        <TasksNav v-if="item.name === 'tasks'" />
+        <LearnNav v-if="item.name === 'learn'" />
+      </template>
     </nav>
 
-    <div class="border-t border-sidebar-border p-2">
+    <div class="space-y-0.5 border-t border-sidebar-border p-2">
+      <RouterLink
+        :to="{ name: 'trash' }"
+        class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        exact-active-class="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+      >
+        <Trash2 class="size-4 opacity-80" /> Trash
+      </RouterLink>
       <RouterLink
         :to="settingsNav.path"
         class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"

@@ -6,5 +6,6 @@
 Rails.application.config.filter_parameters += [
   :passw, :email, :secret, :token, :_key, :crypt, :salt, :certificate, :otp, :ssn, :cvv, :cvc,
   # Journal vault payloads (PRD §7.5) — never log, even though they are ciphertext.
-  :ciphertext, :wrapped_dek, :iv
+  # (`iv` is matched exactly: as a substring it would also hide params like "archived".)
+  :ciphertext, :wrapped_dek, :recovery, /\Aiv\z/
 ]

@@ -713,13 +713,21 @@ Each phase is shippable and maps to learning goals (§13).
 | Phase | Duration (est.) | Scope | Exit criteria |
 |---|---|---|---|
 | **0 — Foundation** ✅ | 1 wk | `rails new --database=postgresql`, vite_rails + Vue + TS + Tailwind + shadcn-vue, Rails 8 auth, app shell (sidebar, theme, ⌘K stub), Dockerfile + compose, CI (lint/test) | Login → empty shell in Docker; image ≤ 300 MB (actual: 293 MB, 202 MB RAM app + 60 MB db) |
-| **1 — Tasks MVP** | 2 wks | Projects, tasks, subtasks, Today/Inbox/Upcoming, list view, task_events, tags — spec: [phase-1-tasks.md](phase-1-tasks.md) | Daily-drivable todo app |
-| **2 — Learn MVP** | 2–3 wks | TipTap editor, folders tree, notes, image upload/paste, wiki-links, backlinks, FTS search | Write and link notes with images |
-| **3 — Tracker** | 1 wk | Trackers, check-ins, streaks, heatmaps, Today integration | Habits tracked from Today page |
-| **4 — Encrypted Journal** | 2 wks | Vault setup/unlock/lock, Argon2id + AES-GCM, entries, calendar, mood, recovery key, canary leak test | Zero plaintext verified |
-| **5 — Analytics v1** | 1–2 wks | SQL views, analytics endpoints, ECharts dashboard, Today stats | Task + tracker dashboards live |
-| **6 — v1.0 polish** | 2–3 wks | Kanban, recurring tasks, NL quick-add, resources, study sessions, flashcards (SM-2), Mood tracker + mirroring, weekly review, trash, backups, export | Feature-complete v1 |
+| **1 — Tasks MVP** ✅ | 2 wks | Projects, tasks, subtasks, Today/Inbox/Upcoming, list view, task_events, tags — spec: [phase-1-tasks.md](phase-1-tasks.md) | Daily-drivable todo app (drag-to-reorder, ⌘K search, quick add `c`) |
+| **2 — Learn MVP** ✅ | 2–3 wks | TipTap editor, folders tree, notes, image upload/paste, wiki-links, backlinks, FTS search | Done: slash menu, callouts, tables, code highlighting, `#tags`, `[[links]]` that create notes, EXIF-stripped WebP variants behind auth, FTS + trigram search |
+| **3 — Tracker** ✅ | 1 wk | Trackers, check-ins, streaks, heatmaps, Today integration | Done: 5 kinds, daily / weekdays / N-per-week, streaks via SQL gaps-and-islands, year heatmap |
+| **4 — Encrypted Journal** ✅ | 2 wks | Vault setup/unlock/lock, Argon2id + AES-GCM, entries, calendar, mood, recovery key, canary leak test | Zero plaintext verified: `make canary` (requests, `pg_dump`, logs, storage) |
+| **5 — Analytics v1** ✅ | 1–2 wks | Analytics query objects (CTEs, window functions, Solid Cache), SVG charts, Today stats | Task, habit, learning and journal-consistency dashboards |
+| **6 — v1.0 polish** ✅ | 2–3 wks | Kanban, recurring tasks, NL quick-add, resources, study sessions, flashcards (SM-2), Mood tracker + mirroring, weekly review, trash, backups, export | Done, plus journal search, On this day and journal export. Backup/restore drilled on a throwaway stack |
 | **7 — Later (P2)** | — | Graph view, journal images, calendar view, focus timer, correlations, note history, **mobile layout + LAN HTTPS (§10.7)**, PWA | |
+
+### 12.1 Implementation notes (where the build differs from this document)
+- **Charts** are small SVG components (`app/frontend/components/charts/`) rather than ECharts, to keep the bundle and image light; palette validated for colour-blind separation in light and dark.
+- **Analytics** use parameterised query objects (`app/queries/analytics/`) instead of database views: every bucket needs the user's time zone, and `schema.rb` stays the schema format. Results are cached in Solid Cache, keyed by each source table's last change.
+- **Streaks** are computed live with one gaps-and-islands query (`TrackerStatsQuery`), not a materialised view.
+- **Backups** are `.tar.gz` (no `zstd` dependency on the host). There's no automatic daily backup job yet.
+- **Priorities** are a Postgres enum (`none … urgent`) rather than `smallint 0–4`; journal entry ids are browser-generated UUIDs so the ciphertext can be bound to its row.
+- **Not built yet (P1):** bulk task actions (TSK-10), task ↔ note links (TSK-11), media library (MED-6), image lightbox (MED-8), encrypted journal images (JRN-7), Markdown import (LRN-14 import half), TOTP 2FA (AUTH-5), journal templates (JRN-13, P2).
 
 ---
 

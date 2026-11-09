@@ -112,3 +112,96 @@
     }
   }
 }
+
+/* ---- Note editor (TipTap) ------------------------------------------------- */
+@layer components {
+  .lumen-prose {
+    @apply min-h-[40vh] text-[15px] leading-7 outline-none;
+    color: var(--foreground);
+  }
+  .lumen-prose > * + * { @apply mt-3; }
+  .lumen-prose h1 { @apply mt-8 text-2xl font-semibold tracking-tight; }
+  .lumen-prose h2 { @apply mt-7 text-xl font-semibold tracking-tight; }
+  .lumen-prose h3 { @apply mt-6 text-base font-semibold; }
+  .lumen-prose a { @apply text-primary underline decoration-primary/40 underline-offset-2; }
+  .lumen-prose strong { @apply font-semibold; }
+  .lumen-prose ul { @apply list-disc pl-6; }
+  .lumen-prose ol { @apply list-decimal pl-6; }
+  .lumen-prose li > p { @apply my-0; }
+  .lumen-prose li + li { @apply mt-1; }
+  .lumen-prose blockquote { @apply border-l-2 border-border pl-4 text-muted-foreground; }
+  .lumen-prose hr { @apply my-6 border-border; }
+  .lumen-prose :not(pre) > code { @apply rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em]; }
+  .lumen-prose pre {
+    @apply overflow-x-auto rounded-lg border bg-muted/50 px-4 py-3 font-mono text-[13px] leading-6;
+  }
+  .lumen-prose pre code { @apply bg-transparent p-0; }
+
+  .lumen-prose ul[data-type="taskList"] { @apply list-none pl-1; }
+  .lumen-prose ul[data-type="taskList"] li { @apply flex items-start gap-2; }
+  .lumen-prose ul[data-type="taskList"] li > label { @apply mt-[5px] flex select-none; }
+  .lumen-prose ul[data-type="taskList"] li > label input { @apply size-4 accent-[var(--primary)]; }
+  .lumen-prose ul[data-type="taskList"] li > div { @apply flex-1; }
+  .lumen-prose ul[data-type="taskList"] li[data-checked="true"] > div { @apply text-muted-foreground line-through; }
+
+  .lumen-prose table { @apply w-full table-fixed border-collapse overflow-hidden text-sm; }
+  .lumen-prose th, .lumen-prose td { @apply relative border px-2.5 py-1.5 align-top; }
+  .lumen-prose th { @apply bg-muted/60 text-left font-medium; }
+  .lumen-prose .selectedCell::after { @apply pointer-events-none absolute inset-0 bg-primary/10 content-['']; }
+
+  .lumen-prose p.is-empty::before, .lumen-prose h1.is-empty::before, .lumen-prose h2.is-empty::before, .lumen-prose h3.is-empty::before {
+    @apply pointer-events-none float-left h-0 text-muted-foreground/60;
+    content: attr(data-placeholder);
+  }
+  /* Only hint on the line being edited, Notion-style. */
+  .lumen-prose p.is-empty:not(.is-editor-empty):not(:focus-within)::before { content: none; }
+  .lumen-prose:not(:focus) p.is-empty:not(.is-editor-empty)::before { content: none; }
+
+  .lumen-prose .wiki-link {
+    @apply cursor-pointer rounded px-0.5 font-medium text-primary underline decoration-primary/30 underline-offset-2 hover:bg-primary/10;
+  }
+  .lumen-prose .wiki-link--missing { @apply text-muted-foreground decoration-dashed; }
+  .lumen-prose .wiki-link--selected { @apply bg-primary/15; }
+
+  .lumen-prose .note-image { @apply relative my-4 block; }
+  .lumen-prose .note-image img { @apply mx-auto h-auto max-h-[70vh] max-w-full rounded-lg border transition-opacity; }
+  .lumen-prose .note-image--selected img { @apply ring-2 ring-ring ring-offset-2 ring-offset-background; }
+  .lumen-prose .note-image__progress { @apply absolute inset-x-8 bottom-4 h-1.5 overflow-hidden rounded-full bg-background/80; }
+  .lumen-prose .note-image__progress span { @apply block h-full rounded-full bg-primary transition-[width]; }
+
+  .lumen-prose .callout { @apply flex gap-3 rounded-lg border px-4 py-3; }
+  .lumen-prose .callout__icon { @apply mt-1 shrink-0 cursor-pointer; }
+  .lumen-prose .callout__content { @apply min-w-0 flex-1; }
+  .lumen-prose .callout__content > * + * { @apply mt-2; }
+  .lumen-prose .callout[data-callout="info"] { @apply border-blue-500/25 bg-blue-500/5; }
+  .lumen-prose .callout[data-callout="info"] .callout__icon { @apply text-blue-500; }
+  .lumen-prose .callout[data-callout="tip"] { @apply border-green-500/25 bg-green-500/5; }
+  .lumen-prose .callout[data-callout="tip"] .callout__icon { @apply text-green-600; }
+  .lumen-prose .callout[data-callout="warning"] { @apply border-amber-500/30 bg-amber-500/5; }
+  .lumen-prose .callout[data-callout="warning"] .callout__icon { @apply text-amber-500; }
+
+  /* Code highlighting (highlight.js class names), tuned for both themes. */
+  .lumen-prose .hljs-comment, .lumen-prose .hljs-quote { @apply italic text-muted-foreground; }
+  .lumen-prose .hljs-keyword, .lumen-prose .hljs-selector-tag, .lumen-prose .hljs-built_in { @apply text-violet-600 dark:text-violet-400; }
+  .lumen-prose .hljs-string, .lumen-prose .hljs-attr, .lumen-prose .hljs-template-variable { @apply text-emerald-700 dark:text-emerald-400; }
+  .lumen-prose .hljs-number, .lumen-prose .hljs-literal, .lumen-prose .hljs-symbol { @apply text-orange-600 dark:text-orange-400; }
+  .lumen-prose .hljs-title, .lumen-prose .hljs-section, .lumen-prose .hljs-function { @apply text-blue-600 dark:text-blue-400; }
+  .lumen-prose .hljs-type, .lumen-prose .hljs-class, .lumen-prose .hljs-variable { @apply text-amber-700 dark:text-amber-300; }
+  .lumen-prose .hljs-meta, .lumen-prose .hljs-tag, .lumen-prose .hljs-name { @apply text-sky-700 dark:text-sky-400; }
+  .lumen-prose .hljs-addition { @apply bg-green-500/10 text-green-700 dark:text-green-400; }
+  .lumen-prose .hljs-deletion { @apply bg-red-500/10 text-red-700 dark:text-red-400; }
+}
+
+/* ---- Charts (dataviz reference palette, validated light + dark) ------------ */
+:root {
+  --viz-1: #2a78d6;   /* categorical slot 1: blue */
+  --viz-2: #eb6834;   /* categorical slot 2: orange */
+  /* Sequential blue, near-zero → high (heatmaps). */
+  --viz-seq-1: #cde2fb; --viz-seq-2: #9ec5f4; --viz-seq-3: #6da7ec; --viz-seq-4: #3987e5; --viz-seq-5: #1c5cab;
+}
+.dark {
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  /* On a dark surface, "near zero" recedes toward the surface: the ramp runs dark → light. */
+  --viz-seq-1: #0d366b; --viz-seq-2: #184f95; --viz-seq-3: #256abf; --viz-seq-4: #3987e5; --viz-seq-5: #86b6ef;
+}

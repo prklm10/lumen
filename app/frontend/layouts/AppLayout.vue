@@ -6,12 +6,18 @@ import { PanelLeftOpen } from '@lucide/vue'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import CommandPalette from '@/components/layout/CommandPalette.vue'
 import { useGlobalShortcuts } from '@/composables/useGlobalShortcuts'
+import QuickAddDialog from '@/features/tasks/components/QuickAddDialog.vue'
+import TaskDetailSheet from '@/features/tasks/components/TaskDetailSheet.vue'
+import { useTaskPanel } from '@/stores/taskPanel'
+import { journalSession } from '@/features/journal/session'
+import { useJournalAutoLock } from '@/features/journal/useJournalAutoLock'
 
 const route = useRoute()
 const isMobile = useMediaQuery('(max-width: 767px)')
 const desktopCollapsed = useStorage('lumen-sidebar-collapsed', false)
 const mobileOpen = ref(false)
 const paletteOpen = ref(false)
+const taskPanel = useTaskPanel()
 
 function toggleSidebar() {
   if (isMobile.value) mobileOpen.value = !mobileOpen.value
@@ -22,7 +28,13 @@ const sidebarVisible = () => (isMobile.value ? mobileOpen.value : !desktopCollap
 
 watch(() => route.fullPath, () => (mobileOpen.value = false))
 
-useGlobalShortcuts({ palette: () => (paletteOpen.value = !paletteOpen.value), toggleSidebar })
+useGlobalShortcuts({
+  palette: () => (paletteOpen.value = !paletteOpen.value),
+  toggleSidebar,
+  newTask: () => taskPanel.quickAdd(),
+  lockJournal: () => journalSession.lock(),
+})
+useJournalAutoLock()
 </script>
 
 <template>
@@ -66,5 +78,7 @@ useGlobalShortcuts({ palette: () => (paletteOpen.value = !paletteOpen.value), to
     </main>
 
     <CommandPalette v-model:open="paletteOpen" />
+    <QuickAddDialog />
+    <TaskDetailSheet />
   </div>
 </template>

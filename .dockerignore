@@ -58,3 +58,4 @@
 /.nvmrc
 /.rubocop.yml
 /storage/*
+/backups

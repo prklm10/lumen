@@ -1,0 +1,7 @@
+overdue_errands:
+  tag: errands
+  taggable: overdue (Task)
+
+due_today_postgres:
+  tag: postgres
+  taggable: due_today (Task)

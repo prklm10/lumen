@@ -50,6 +50,36 @@ bin/rails db:prepare
 bin/dev                      # Rails on :3000 + Vite (HMR) on :3036
 ```
 
+## What's inside
+
+| Module | Highlights |
+|---|---|
+| **Tasks** | Inbox / Today / Upcoming / Completed, projects with sections, list or Kanban board, subtasks, tags, recurring tasks, natural-language quick add (`c`: “Call mom tomorrow 6pm #family !high every week”) |
+| **Learn** | Block editor (`/` menu, Markdown shortcuts, tables, callouts, code), folders, `[[wiki links]]` + backlinks, `#tags`, images, topics, resources, study log, SM-2 flashcards (`Question :: Answer`) |
+| **Tracker** | Yes/no, count, duration, number and 1–5 trackers; streaks, heatmaps, backfill |
+| **Journal** | End-to-end encrypted in the browser (Argon2id + AES-256-GCM); the server stores only ciphertext. Recovery key, auto-lock, search and “On this day” on-device |
+| **Analytics** | Throughput, completion and on-time rates, productive hours, habit consistency, learning time, weekly review |
+
+Everything else: ⌘K search across notes and tasks, trash (30 days), JSON / Markdown / encrypted journal exports in Settings.
+
+## Back up and restore (Docker stack)
+
+```sh
+make backup                                   # → backups/lumen-YYYYMMDD-HHMMSS.tar.gz (database + uploads; keeps 14)
+make restore FILE=backups/lumen-….tar.gz      # replaces all current data; asks you to confirm
+```
+
+Journal entries are already ciphertext inside a backup.
+
+## Journal leak test
+
+With the dev stack running (`make dev-up`) and Chrome installed:
+
+```sh
+make canary EMAIL=you@example.com PASSWORD=…  # writes an entry with a random canary, then checks
+                                              # requests, a pg_dump, the logs and storage for it
+```
+
 ## Test
 
 ```sh

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Proves journal plaintext never reaches the server (PRD §7.5). Needs the dev stack (make dev-up)
+# and Google Chrome. Usage: bin/journal-canary [email] [password]
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+base="http://localhost:${LUMEN_DEV_PORT:-3200}"
+email="${1:?usage: bin/journal-canary EMAIL PASSWORD}"
+password="${2:?usage: bin/journal-canary EMAIL PASSWORD}"
+canary="CANARY$(openssl rand -hex 12)"
+dev="docker compose -f compose.dev.yml"
+
+echo "Canary: $canary"
+node test/e2e/journal-canary.mjs "$base" "$email" "$password" "$canary"
+
+status=0
+check() {
+  local where="$1" hits="$2"
+  if [ "$hits" -eq 0 ]; then echo "✓ not in $where"; else echo "✗ found in $where ($hits)"; status=1; fi
+}
+check "a pg_dump of the database" "$($dev exec -T db pg_dump -U lumen lumen_development | grep -c "$canary" || true)"
+check "log/development.log" "$(grep -c "$canary" log/development.log || true)"
+check "storage/ and tmp/" "$(grep -rl "$canary" storage tmp 2>/dev/null | wc -l | tr -d ' ')"
+exit $status

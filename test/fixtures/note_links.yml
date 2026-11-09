@@ -1,0 +1,5 @@
+indexes_to_planner:
+  source_note: indexes
+  target_note: planner
+  target_title: Query planner
+  created_at: <%= Time.current.to_fs(:db) %>

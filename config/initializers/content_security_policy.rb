@@ -11,7 +11,8 @@ Rails.application.configure do
     policy.object_src      :none
     policy.font_src        :self, :data
     policy.img_src         :self, :data, :blob
-    policy.script_src      :self
+    # 'wasm-unsafe-eval' lets the journal's Argon2id (WebAssembly) compile; JS eval stays blocked.
+    policy.script_src      :self, :wasm_unsafe_eval
     # Vue/Reka set inline style attributes for positioning popovers.
     policy.style_src       :self, :unsafe_inline
     policy.connect_src     :self

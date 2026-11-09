@@ -16,23 +16,23 @@ export interface NavItem {
 export const primaryNav: NavItem[] = [
   { name: 'today', label: 'Today', path: '/', icon: Sun, shortcut: 'h' },
   {
-    name: 'journal', label: 'Journal', path: '/journal', icon: NotebookPen, shortcut: 'j', phase: 4,
+    name: 'journal', label: 'Journal', path: '/journal', icon: NotebookPen, shortcut: 'j',
     description: 'An end-to-end encrypted journal. Only you, with your passphrase, can read it.',
   },
   {
-    name: 'tasks', label: 'Tasks', path: '/tasks', icon: CheckSquare, shortcut: 't', phase: 1,
+    name: 'tasks', label: 'Tasks', path: '/tasks', icon: CheckSquare, shortcut: 't',
     description: 'Projects, due dates, priorities, and a Today view that keeps you honest.',
   },
   {
-    name: 'tracker', label: 'Tracker', path: '/tracker', icon: LineChart, shortcut: 'r', phase: 3,
+    name: 'tracker', label: 'Tracker', path: '/tracker', icon: LineChart, shortcut: 'r',
     description: 'Habits and daily metrics with streaks and yearly heatmaps.',
   },
   {
-    name: 'learn', label: 'Learn', path: '/learn', icon: BookOpen, shortcut: 'l', phase: 2,
+    name: 'learn', label: 'Learn', path: '/learn', icon: BookOpen, shortcut: 'l',
     description: 'Linked notes, topics, resources, and spaced-repetition flashcards.',
   },
   {
-    name: 'analytics', label: 'Analytics', path: '/analytics', icon: BarChart3, shortcut: 'a', phase: 5,
+    name: 'analytics', label: 'Analytics', path: '/analytics', icon: BarChart3, shortcut: 'a',
     description: 'Task completion, habit consistency, and learning time — all in one place.',
   },
 ]

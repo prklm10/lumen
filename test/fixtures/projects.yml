@@ -1,0 +1,11 @@
+rails:
+  name: Learn Rails
+  color: violet
+  icon: book
+  position: 1
+
+archived:
+  name: Old stuff
+  color: gray
+  position: 2
+  archived_at: <%= 3.days.ago.to_fs(:db) %>

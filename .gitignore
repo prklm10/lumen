@@ -44,3 +44,6 @@ node_modules
 
 # Local secrets for Docker (see .env.example)
 /.env
+
+# bin/backup archives (contain your data)
+/backups/

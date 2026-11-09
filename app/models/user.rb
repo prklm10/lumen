@@ -1,6 +1,17 @@
 class User < ApplicationRecord
   has_secure_password
   has_many :sessions, dependent: :destroy
+  has_one :journal_vault, dependent: :destroy
+
+  # users.settings keys and their types. Unknown keys are dropped.
+  SETTINGS = { "journal_mood_mirror" => :boolean, "week_start" => :integer }.freeze
+
+  def settings=(value)
+    clean = value.to_h.stringify_keys.slice(*SETTINGS.keys).to_h do |key, v|
+      [ key, SETTINGS[key] == :boolean ? ActiveModel::Type::Boolean.new.cast(v) : Integer(v, exception: false) ]
+    end
+    super((settings || {}).merge(clean))
+  end
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
   # Browsers may report legacy aliases (e.g. "Asia/Calcutta"); store the canonical name.

@@ -1,0 +1,59 @@
+# Dates are computed in the fixture user's zone (users.yml → Asia/Kolkata), like the API does.
+<% zone = Time.find_zone("Asia/Kolkata"); today = zone.today %>
+inbox_task:
+  title: Buy groceries
+  position: 1
+
+overdue:
+  title: Renew passport
+  priority: high
+  due_date: <%= today - 2 %>
+  position: 2
+
+due_today:
+  title: Read chapter 3 of PG internals
+  project: rails
+  section: week_one
+  due_date: <%= today %>
+  position: 1
+
+due_later:
+  title: Write a migration
+  project: rails
+  due_date: <%= today + 3 %>
+  position: 2
+
+done_today:
+  title: Set up Docker
+  project: rails
+  status: done
+  completed_at: <%= zone.now.beginning_of_day.utc.to_fs(:db) %>
+  position: 3
+
+done_yesterday:
+  title: Install Ruby
+  project: rails
+  status: done
+  completed_at: <%= (zone.now.beginning_of_day - 1.hour).utc.to_fs(:db) %>
+  position: 4
+
+parent:
+  title: Plan the week
+  position: 3
+
+subtask_one:
+  title: Pick three goals
+  parent: parent
+  position: 1
+
+subtask_two:
+  title: Block focus time
+  parent: parent
+  status: done
+  completed_at: <%= 1.hour.ago.to_fs(:db) %>
+  position: 2
+
+discarded:
+  title: Old idea
+  position: 4
+  discarded_at: <%= 1.day.ago.to_fs(:db) %>

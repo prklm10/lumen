@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { authApi, type User } from '@/api/auth'
+import { authApi, type User, type UserSettings } from '@/api/auth'
+import { journalSession } from '@/features/journal/session'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
@@ -28,10 +29,15 @@ export const useAuthStore = defineStore('auth', () => {
     needsSetup.value = false
   }
 
+  async function updateMe(change: { time_zone?: string; settings?: Partial<UserSettings> }) {
+    user.value = (await authApi.updateMe(change)).user
+  }
+
   async function logout() {
+    journalSession.lock()
     await authApi.logout()
     user.value = null
   }
 
-  return { user, needsSetup, isAuthenticated, bootstrap, login, setup, logout }
+  return { user, needsSetup, isAuthenticated, bootstrap, login, setup, updateMe, logout }
 })

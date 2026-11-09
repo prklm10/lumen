@@ -1,6 +1,6 @@
 # Phase 1 — Tasks MVP: Backend Requirements
 
-**Owner:** you (backend) → Claude (UI, after the API is done)
+**Status:** ✅ implemented: backend (`app/models/task.rb`, `app/queries/tasks_query.rb`, `app/controllers/api/v1/*`) and UI (`app/frontend/features/tasks/`).
 **Goal:** a todo app you can use every day: projects, sections, tasks, subtasks, tags, plus the Today / Inbox / Upcoming / Completed views, all backed by an append-only `task_events` log that Phase 5 analytics will read.
 
 This document is the **contract between the backend and the UI**. The UI will be built against the exact request and response shapes below. If you change a shape, update this file so the two stay in sync.
@@ -113,8 +113,8 @@ Add a UNIQUE index on `(tag_id, taggable_type, taggable_id)` and a regular index
 | parent_id | FK → tasks | nullable, **ON DELETE CASCADE** |
 | title | text | NOT NULL, CHECK `char_length(btrim(title)) BETWEEN 1 AND 500` |
 | description | jsonb | nullable (TipTap/ProseMirror document JSON) |
-| status | text | NOT NULL default `'todo'`, CHECK IN (`todo`, `in_progress`, `done`, `cancelled`) |
-| priority | smallint | NOT NULL default 0, CHECK `BETWEEN 0 AND 4` (0 none, 1 low, 2 medium, 3 high, 4 urgent) |
+| status | `status_enum` (Postgres enum) | NOT NULL default `'todo'`: `todo`, `in_progress`, `done`, `cancelled` |
+| priority | `priority_enum` (Postgres enum) | NOT NULL default `'none'`: `none`, `low`, `medium`, `high`, `urgent`. Enums sort in declaration order, so `ORDER BY priority DESC` puts urgent first. |
 | due_date | date | nullable |
 | due_at | timestamptz | nullable; set only when a time of day is chosen |
 | estimate_minutes | integer | nullable, CHECK `> 0 AND <= 10080` |
@@ -147,7 +147,7 @@ Keep these in one Ruby constant, for example `Palette::COLORS`, and reuse it in 
 |---|---|---|
 | id | bigint PK | |
 | task_id | FK → tasks | NOT NULL, **ON DELETE CASCADE** |
-| event | text | NOT NULL, CHECK IN (`created`, `status_changed`, `rescheduled`, `discarded`) |
+| event | `event_enum` | NOT NULL: `created`, `status_changed`, `rescheduled`, `discarded` |
 | from_status | text | nullable |
 | to_status | text | nullable |
 | from_due_date | date | nullable |
@@ -177,7 +177,7 @@ Add an index on `(task_id, occurred_at)` and one on `(occurred_at)`. There is **
 7. **Position:**
    - New tasks go to the **end** of their container: `max(position) + 1` among siblings, where siblings share the same `(project_id, section_id, parent_id)`.
    - Reordering sends explicit positions (§5.4). Positions are `numeric`, so the UI can send midpoints like `1.5`.
-8. **Events:** use `after_create_commit` and `after_update_commit` (or a `Trackable` concern):
+8. **Events:** write them in `after_create` / `after_save`, i.e. **inside the same transaction** as the change, so a rolled-back save never leaves a phantom event:
    - create → `created` with `to_status`
    - status change → `status_changed` with from/to
    - `due_date` change → `rescheduled` with from/to dates
@@ -209,13 +209,13 @@ All paths are under `/api/v1`.
   "title": "Read chapter 3 of PG internals",
   "description": { "type": "doc", "content": [] },
   "status": "todo",
-  "priority": 3,
+  "priority": "high",
   "due_date": "2026-10-31",
   "due_at": "2026-10-31T18:00:00+05:30",
   "overdue": false,
   "estimate_minutes": 45,
   "completed_at": null,
-  "position": "3.0",
+  "position": 3.0,
   "project_id": 7,
   "section_id": null,
   "parent_id": null,
@@ -229,7 +229,7 @@ All paths are under `/api/v1`.
 - `overdue` is computed and true when the task is open (`todo` or `in_progress`) and either:
   - `due_at` is set and earlier than now, or
   - `due_at` is null and `due_date` is earlier than today in the user's time zone.
-- `position` may be serialized as a string (Rails serializes BigDecimal that way) or as a float. The UI handles both, but keep it consistent.
+- `position` is a JSON number (the BigDecimal column is converted with `to_f`).
 - `subtask_count` and `subtask_done_count` count kept subtasks only and are 0 for subtasks. **Avoid N+1 queries:**
   - Option 1: preload the counts in one grouped query.
   - Option 2: use `counter_cache`-style columns.
@@ -276,7 +276,7 @@ All paths are under `/api/v1`.
 | Request | Result |
 |---|---|
 | `POST /tasks {task:{title:""}}` | 422, `details.title` present |
-| `POST /tasks {task:{title:"x", priority:9}}` | 422, `details.priority` |
+| `POST /tasks {task:{title:"x", priority:"extreme"}}` | 422, `details.priority` |
 | `POST /tasks {task:{title:"x", section_id:<section from another project>}}` | 422, `details.section_id` |
 | `POST /tasks {task:{title:"x", parent_id:<a subtask>}}` | 422, `details.parent_id` |
 | `POST /tasks {task:{title:"x", project_id:<archived>}}` | 422, `details.project_id` |
@@ -303,9 +303,9 @@ These are open top-level tasks only and use the same rules as the views. `today`
 ### 5.6 Projects
 `ProjectJSON`:
 ```json
-{ "id": 7, "name": "Learning Rails", "color": "violet", "icon": "book", "position": "1.0",
+{ "id": 7, "name": "Learning Rails", "color": "violet", "icon": "book", "position": 1.0,
   "archived": false, "archived_at": null, "open_task_count": 12,
-  "sections": [{ "id": 4, "name": "Week 1", "position": "1.0" }],
+  "sections": [{ "id": 4, "name": "Week 1", "position": 1.0, "project_id": 7 }],
   "created_at": "...", "updated_at": "..." }
 ```
 
@@ -336,7 +336,7 @@ A section looked up through the wrong project → 404. Use `project.sections.fin
 ### 5.9 Meta
 ```json
 GET /api/v1/meta
-{ "colors": ["gray", "red", ...], "priorities": [{ "value": 0, "label": "None" }, ... { "value": 4, "label": "Urgent" }],
+{ "colors": ["gray", "red", ...], "priorities": [{ "value": "none", "label": "None" }, ... { "value": "urgent", "label": "Urgent" }],
   "statuses": ["todo", "in_progress", "done", "cancelled"] }
 ```
 This is small and static, so the UI never hard-codes values the backend owns.
@@ -390,7 +390,7 @@ When this is done, tell me and I'll build the UI: the Tasks pages (Inbox, Today,
 | `ON DELETE CASCADE / SET NULL` | `add_foreign_key ..., on_delete:`; think about why each FK in §3 has the option it does |
 | Polymorphic taggings | Rails guide "Associations → Polymorphic"; `has_many :tags, through: :taggings` |
 | Self-referential subtasks | `belongs_to :parent, class_name: "Task", optional: true`; `has_many :subtasks, foreign_key: :parent_id` |
-| Callbacks vs service objects | Use `after_commit` (not `after_save`) for events, and find out why. You could put complete/reopen logic in the model or in `Tasks::Complete`; try both and keep one. |
+| Callbacks vs service objects | `after_save` runs inside the save's transaction (good for rows that must match the change, like `task_events`); `after_commit` runs after it (good for side effects outside the DB: jobs, emails, cache busting). Complete/reopen live on the model. |
 | Time zones | `Time.use_zone`, `Date.current` vs `Date.today` (only one is correct here), `in_time_zone` |
 | Keyset pagination | Row-value comparison `(a, b) < (x, y)` and why `OFFSET` gets slow |
 | Aggregates | `count(*) FILTER (WHERE ...)`, `GROUP BY`, `.group(:project_id).count` |

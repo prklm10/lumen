@@ -1,0 +1,19 @@
+indexes:
+  title: Postgres indexes
+  folder: databases
+  position: 1
+  content: <%= { type: "doc", content: [ { type: "paragraph", content: [ { type: "text", text: "B-tree indexes speed up lookups. See " }, { type: "wikiLink", attrs: { title: "Query planner" } } ] } ] }.to_json %>
+  content_text: B-tree indexes speed up lookups. See Query planner
+
+planner:
+  title: Query planner
+  folder: databases
+  position: 2
+  pinned: true
+  content: <%= { type: "doc", content: [ { type: "paragraph", content: [ { type: "text", text: "EXPLAIN ANALYZE shows the plan." } ] } ] }.to_json %>
+  content_text: EXPLAIN ANALYZE shows the plan.
+
+old:
+  title: Old draft
+  position: 3
+  discarded_at: <%= 1.day.ago.to_fs(:db) %>

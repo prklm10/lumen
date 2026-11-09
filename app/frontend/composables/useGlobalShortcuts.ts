@@ -8,9 +8,9 @@ function isTyping(target: EventTarget | null) {
 }
 
 /**
- * ⌘K / Ctrl+K → palette, ⌘\ → toggle sidebar, `g` then a letter → navigate (PRD GLB-2).
+ * ⌘K / Ctrl+K → palette, ⌘\ → toggle sidebar, ⌘⇧L → lock journal, `c` → new task, `g` then a letter → navigate (PRD GLB-2).
  */
-export function useGlobalShortcuts(handlers: { palette: () => void; toggleSidebar: () => void }) {
+export function useGlobalShortcuts(handlers: { palette: () => void; toggleSidebar: () => void; newTask: () => void; lockJournal: () => void }) {
   const router = useRouter()
   const destinations = [...primaryNav, settingsNav]
   let awaitingGoKey = false
@@ -21,6 +21,11 @@ export function useGlobalShortcuts(handlers: { palette: () => void; toggleSideba
     if (mod && event.key.toLowerCase() === 'k') {
       event.preventDefault()
       handlers.palette()
+      return
+    }
+    if (mod && event.shiftKey && event.key.toLowerCase() === 'l') {
+      event.preventDefault()
+      handlers.lockJournal()
       return
     }
     if (mod && event.key === '\\') {
@@ -38,6 +43,9 @@ export function useGlobalShortcuts(handlers: { palette: () => void; toggleSideba
         event.preventDefault()
         router.push(target.path)
       }
+    } else if (event.key === 'c' && !document.querySelector('[role="dialog"]')) {
+      event.preventDefault()
+      handlers.newTask()
     } else if (event.key === 'g') {
       awaitingGoKey = true
       goTimer = setTimeout(() => (awaitingGoKey = false), 1000)
